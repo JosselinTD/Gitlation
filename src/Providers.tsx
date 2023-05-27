@@ -1,13 +1,13 @@
-import { ThemeProvider } from "@mui/material";
 import { PropsWithChildren } from "react";
-import { theme } from "./theme/base";
 import { CssBaseline } from "@mui/material";
+import { WorkspaceContext } from "./workspace/WorkspaceContext";
+import GithubWorkspace from "./workspace/GithubWorkspace";
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
-    <ThemeProvider theme={theme}>
+    <WorkspaceContext.Provider value={new GithubWorkspace()}>
       <CssBaseline />
       {children}
-    </ThemeProvider>
+    </WorkspaceContext.Provider>
   );
 }
