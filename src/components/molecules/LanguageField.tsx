@@ -19,9 +19,12 @@ export default function LanguageField() {
             />
           )}
           options={allLanguages}
+          value={workspace.language || null}
           size="small"
-          onChange={(_event, value) => value && workspace.setLanguage(value)}
-          disabled={!workspace.hasBranches()}
+          onChange={(_event, value) =>
+            workspace.setLanguage(value || undefined)
+          }
+          disabled={!workspace.targetBranch}
         />
       </CardContent>
     </Card>

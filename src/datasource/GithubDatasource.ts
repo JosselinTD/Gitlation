@@ -64,7 +64,11 @@ export default class GithubDatasource implements Datasource {
       sha: (result.data as RepoResponseData).sha,
     };
   }
-  async createLanguageBranch(repository: Repository, name: string) {
+  async createLanguageBranch(
+    repository: Repository,
+    name: string,
+    targetBranch: Branch
+  ) {
     if (!this.master) throw Error();
     const createdBranch = await this.octokit.request(
       "POST /repos/{owner}/{repo}/git/refs",
@@ -72,7 +76,7 @@ export default class GithubDatasource implements Datasource {
         owner: repository.owner,
         repo: repository.name,
         ref: `refs/heads/${name}`,
-        sha: this.master.sha,
+        sha: targetBranch.sha,
         headers: {
           "X-GitHub-Api-Version": "2022-11-28",
         },

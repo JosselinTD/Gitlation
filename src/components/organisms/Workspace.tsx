@@ -5,6 +5,7 @@ import LanguageField from "../molecules/LanguageField";
 import TranslationsField from "../molecules/TranslationsField";
 import ConfigurationStepper from "../molecules/ConfigurationStepper";
 import SaveOrPublish from "../molecules/SaveOrPublish";
+import BranchField from "../molecules/BranchField";
 
 export default function Workspace() {
   return (
@@ -13,8 +14,11 @@ export default function Workspace() {
         <Grid xs={1}>
           <TokenField />
         </Grid>
-        <Grid xs={9}>
+        <Grid xs={6}>
           <RepositoryField />
+        </Grid>
+        <Grid xs={3}>
+          <BranchField />
         </Grid>
         <Grid xs={2}>
           <LanguageField />

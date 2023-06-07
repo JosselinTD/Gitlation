@@ -5,6 +5,7 @@ import { Stack, TextField } from "@mui/material";
 export default function TranslationsField() {
   const workspace = useContext(WorkspaceContext);
   workspace.useRefresh();
+
   return (
     <Stack spacing={2}>
       {workspace.keys &&
@@ -17,7 +18,7 @@ export default function TranslationsField() {
                 ? workspace.keys[translationKey].defaultValue
                 : undefined
             }
-            value={
+            defaultValue={
               workspace.translations && workspace.translations[translationKey]
             }
             onChange={(event) =>

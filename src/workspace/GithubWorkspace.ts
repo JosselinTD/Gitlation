@@ -11,6 +11,8 @@ import {
 export default class GithubWorkspace {
   public repositories: Repository[] | undefined;
   public repository: Repository | undefined;
+  public branches: Branch[] | undefined;
+  public targetBranch: Branch | undefined;
   public language: string | undefined;
   public keys: TranslationKeys | undefined;
   public translations: Translations | undefined;
@@ -18,7 +20,6 @@ export default class GithubWorkspace {
   private listeners: (() => void)[] = [];
 
   private datasource: GithubDatasource | undefined;
-  private branches: Branch[] | undefined;
   private master: Branch | undefined;
   private branch: Branch | undefined;
   private configuration: Config | undefined;
@@ -55,31 +56,63 @@ export default class GithubWorkspace {
     this.branch = undefined;
     this.configuration = undefined;
     this.translationFile = undefined;
+    this.keys = undefined;
 
     this.triggerListeners();
   }
-  async setRepository(repository: Repository) {
+  async setRepository(repository: Repository | undefined) {
     this.repository = repository;
-    this.branches = await this.datasource?.getAllBranches(this.repository);
-    this.master = this.branches?.find((branch) => branch.name === "master");
+
+    if (this.repository) {
+      this.branches = await this.datasource?.getAllBranches(this.repository);
+      this.master = this.branches?.find((branch) => branch.name === "master");
+    } else {
+      this.branches = undefined;
+      this.master = undefined;
+    }
+
+    this.targetBranch = undefined;
+    this.language = undefined;
+    this.translations = undefined;
+    this.branch = undefined;
+    this.configuration = undefined;
+    this.translationFile = undefined;
+    this.keys = undefined;
+
+    this.triggerListeners();
+  }
+  async setTargetBranch(targetBranch: Branch | undefined) {
+    this.targetBranch = targetBranch;
 
     this.language = undefined;
     this.translations = undefined;
     this.branch = undefined;
     this.configuration = undefined;
     this.translationFile = undefined;
+    this.keys = undefined;
 
     this.triggerListeners();
   }
-  async setLanguage(language: string) {
-    if (!this.branches || !this.master) throw Error();
+  async setLanguage(language: string | undefined) {
+    if (!this.branches || !this.master || !this.targetBranch) throw Error();
     this.language = language;
-    this.branch = this.branches?.find(
-      (branch) => branch.name === this.getBranchName()
-    );
-    await this.setConfiguration(this.branch || this.master);
-    await this.setKeys(this.branch || this.master);
-    await this.setTranslationFile(this.branch || this.master);
+
+    if (this.language) {
+      this.branch = this.branches?.find(
+        (branch) => branch.name === this.getBranchName()
+      );
+      await this.setConfiguration(this.targetBranch || this.master);
+      await this.setKeys(this.targetBranch || this.master);
+      await this.setTranslationFile(
+        this.branch || this.targetBranch || this.master
+      );
+    } else {
+      this.translations = undefined;
+      this.branch = undefined;
+      this.configuration = undefined;
+      this.translationFile = undefined;
+      this.keys = undefined;
+    }
 
     this.triggerListeners();
   }
@@ -88,37 +121,29 @@ export default class GithubWorkspace {
       !this.datasource ||
       !this.repository ||
       !this.language ||
-      !this.translationFile
+      !this.translationFile ||
+      !this.targetBranch
     )
       throw Error();
     if (!this.branch) {
       this.branch = await this.datasource?.createLanguageBranch(
         this.repository,
-        this.getBranchName()
+        this.getBranchName(),
+        this.targetBranch
       );
-      const [translationFile, commit] = await this.datasource.createFileCommit(
-        this.branch,
-        this.language,
-        {
-          path: this.translationFile.path,
-          content: JSON.stringify(this.translations),
-        }
-      );
-      this.translationFile = translationFile;
-      this.branch.sha = commit.sha;
-    } else {
-      const [translationFile, commit] = await this.datasource.createFileCommit(
-        this.branch,
-        this.language,
-        {
-          path: this.translationFile.path,
-          content: JSON.stringify(this.translations),
-          sha: this.translationFile.sha,
-        }
-      );
-      this.translationFile = translationFile;
-      this.branch.sha = commit.sha;
     }
+    const [translationFile, commit] = await this.datasource.createFileCommit(
+      this.branch,
+      this.language,
+      {
+        path: this.translationFile.path,
+        content: JSON.stringify(this.translations),
+        sha: this.translationFile.sha,
+      }
+    );
+    this.translationFile = translationFile;
+    this.branch.sha = commit.sha;
+
     this.translations = JSON.parse(this.translationFile.content);
 
     this.triggerListeners();
@@ -178,7 +203,7 @@ export default class GithubWorkspace {
     }
   }
   private getBranchName() {
-    return `Translate-${this.language}`;
+    return `Translate-${this.language}-in-${this.targetBranch?.name}`;
   }
   private harmonizeKeys(
     nonFormattedKeys: string[] | Translations | TranslationKeys

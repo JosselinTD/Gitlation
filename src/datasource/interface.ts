@@ -7,7 +7,8 @@ export type Datasource = {
 
   createLanguageBranch: (
     repository: Repository,
-    name: string
+    name: string,
+    targetBranch: Branch
   ) => Promise<Branch>;
   createFileCommit: (
     branch: Branch,
