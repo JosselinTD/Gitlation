@@ -5,3 +5,9 @@ export type Config = {
 export type Translations = {
   [key: string]: string;
 };
+export type TranslationKeysContent = {
+  [key: string]: string;
+};
+export type TranslationKeys = {
+  [key: string]: TranslationKeysContent;
+};

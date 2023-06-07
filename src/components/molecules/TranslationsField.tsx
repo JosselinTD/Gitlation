@@ -8,10 +8,15 @@ export default function TranslationsField() {
   return (
     <Stack spacing={2}>
       {workspace.keys &&
-        workspace.keys.map((translationKey) => (
+        Object.keys(workspace.keys).map((translationKey) => (
           <TextField
             key={translationKey}
             label={translationKey}
+            placeholder={
+              workspace.keys
+                ? workspace.keys[translationKey].defaultValue
+                : undefined
+            }
             value={
               workspace.translations && workspace.translations[translationKey]
             }

@@ -1,4 +1,4 @@
 {
-  "keyFile": "translations/keys.json",
+  "keyFile": "translations/en-EN.json",
   "output": "translations/{LANG}.json"
 }

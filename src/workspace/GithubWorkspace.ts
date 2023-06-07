@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import GithubDatasource from "../datasource/GithubDatasource";
 import { Branch, Repository, File } from "../datasource/types";
-import { Config, Translations } from "./types";
+import {
+  Config,
+  TranslationKeys,
+  TranslationKeysContent,
+  Translations,
+} from "./types";
 
 export default class GithubWorkspace {
   public repositories: Repository[] | undefined;
   public repository: Repository | undefined;
   public language: string | undefined;
-  public keys: string[] | undefined;
+  public keys: TranslationKeys | undefined;
   public translations: Translations | undefined;
 
   private listeners: (() => void)[] = [];
@@ -139,9 +144,11 @@ export default class GithubWorkspace {
   }
   private async setKeys(branch: Branch) {
     if (!branch || !this.configuration) throw Error();
-    this.keys = JSON.parse(
-      (await this.datasource?.getFile(branch, this.configuration.keyFile))
-        ?.content || ""
+    this.keys = this.harmonizeKeys(
+      JSON.parse(
+        (await this.datasource?.getFile(branch, this.configuration.keyFile))
+          ?.content || "{}"
+      )
     );
     if (!this.keys)
       throw Error("No keys file file found on branch " + branch.name);
@@ -172,5 +179,26 @@ export default class GithubWorkspace {
   }
   private getBranchName() {
     return `Translate-${this.language}`;
+  }
+  private harmonizeKeys(
+    nonFormattedKeys: string[] | Translations | TranslationKeys
+  ): TranslationKeys {
+    if (Array.isArray(nonFormattedKeys)) {
+      return nonFormattedKeys.reduce((acc: TranslationKeys, key: string) => {
+        acc[key] = {};
+        return acc;
+      }, {});
+    }
+    let formattedKeys: TranslationKeys = {};
+    Object.keys(nonFormattedKeys).forEach((key: string) => {
+      if (typeof nonFormattedKeys[key] === "string") {
+        formattedKeys[key] = {
+          defaultValue: nonFormattedKeys[key] as string,
+        };
+      } else {
+        formattedKeys[key] = nonFormattedKeys[key] as TranslationKeysContent;
+      }
+    });
+    return formattedKeys;
   }
 }
