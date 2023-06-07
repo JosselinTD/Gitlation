@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   CardContent,
+  CircularProgress,
   Dialog,
   FormControlLabel,
   IconButton,
@@ -24,19 +25,24 @@ export default function TokenField() {
   workspace.useRefresh();
   const [savedToken, saveToken] = useLocalStorage("github_token", "");
   const [open, setOpen] = useState(true);
+  const [waiting, setWaiting] = useState(true);
 
   useEffect(() => {
     (async () => {
       if (savedToken && !workspace.hasToken()) {
-        await workspace.setToken(savedToken);
+        setWaiting(true);
         setOpen(false);
+        await workspace.setToken(savedToken);
+        setWaiting(false);
       }
     })();
   }, [savedToken, setOpen]);
 
   async function handleValidate(token: string, rememberMe: boolean) {
-    await workspace.setToken(token);
+    setWaiting(true);
     setOpen(false);
+    await workspace.setToken(token);
+    setWaiting(false);
     if (rememberMe) {
       saveToken(token);
     }
@@ -54,7 +60,29 @@ export default function TokenField() {
         </IconButton>
       </CardContent>
       <TokenDialog open={open} onValidate={handleValidate} />
+      <WaitingDialog open={waiting} />
     </Card>
+  );
+}
+
+type WaitingDialogProps = {
+  open: boolean;
+};
+
+function WaitingDialog({ open }: WaitingDialogProps) {
+  return (
+    <Dialog
+      sx={{
+        ".MuiPaper-root": {
+          background: "none",
+          boxShadow: "none",
+          overflow: "hidden",
+        },
+      }}
+      open={open}
+    >
+      <CircularProgress />
+    </Dialog>
   );
 }
 
